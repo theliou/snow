@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <style>
         * { margin: 0; padding: 0; }
         body {
-            background: linear-gradient(145deg, #000000 0%, #000000 100%);
+            background: #000;
             min-height: 100vh;
             overflow-x: hidden;
             cursor: default;
@@ -13,13 +14,28 @@
             position: fixed;
             top: 0;
             left: 0;
-            pointer-events: auto;  /* 让 canvas 可以捕获鼠标事件 */
-            z-index: 9999;
+            pointer-events: auto;
+            z-index: 1;
+        }
+        h1{
+            position:relative;
+            z-index:2;
+            color:white;
+            text-align:center;
+            padding-top:50px;
+        }
+        /* 隐藏元素预加载雪花字体，强制浏览器提前加载emoji字体 */
+        .preload-font{
+            position:absolute;
+            opacity:0;
+            font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+            font-size:20px;
         }
     </style>
 </head>
 <body>
-    <h1 style="color:white; text-align:center; padding-top:50px;">鼠标靠近雪花会躲开</h1>
+    <div class="preload-font">❆</div>
+    <h1>鼠标靠近雪花会躲开</h1>
 
     <script>
         (function() {
@@ -30,13 +46,12 @@
             const ctx = canvas.getContext('2d');
 
             let snowflakes = [];
-            const SNOW_COUNT = 150;        // 雪花数量
-            const AVOID_RADIUS = 150;        // 鼠标避开半径（像素）
-            const AVOID_FORCE = 1;         // 避开的位移强度
+            const SNOW_COUNT = 150;
+            const AVOID_RADIUS = 150;
+            const AVOID_FORCE = 1;
 
             let mouseX = null, mouseY = null;
 
-            // 监听鼠标位置
             canvas.addEventListener('mousemove', (e) => {
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;
@@ -53,24 +68,20 @@
                 constructor() {
                     this.x = Math.random() * canvas.width;
                     this.y = Math.random() * canvas.height;
-                    // 大小范围改为 6~18px（更小）
                     this.size = Math.random() * 12 + 6;
                     this.speedY = Math.random() * 1.2 + 0.4;
                     this.speedX = Math.random() * 0.6 - 0.3;
                     this.opacity = Math.random() * 0.7 + 0.3;
                 }
                 update() {
-                    // 正常移动
                     this.y += this.speedY;
                     this.x += this.speedX;
 
-                    // 鼠标避开逻辑
                     if (mouseX !== null && mouseY !== null) {
                         const dx = this.x - mouseX;
                         const dy = this.y - mouseY;
                         const distance = Math.hypot(dx, dy);
                         if (distance < AVOID_RADIUS) {
-                            // 远离方向：从鼠标指向雪花的方向向量
                             const angle = Math.atan2(dy, dx);
                             const forceX = Math.cos(angle) * AVOID_FORCE;
                             const forceY = Math.sin(angle) * AVOID_FORCE;
@@ -79,7 +90,6 @@
                         }
                     }
 
-                    // 边界重置（超出画布就回到顶部/侧边）
                     if (this.y > canvas.height + this.size) {
                         this.y = -this.size;
                         this.x = Math.random() * canvas.width;
@@ -95,7 +105,7 @@
                 }
                 draw() {
                     ctx.font = `${this.size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
-                    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`; // 纯白色
+                    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
                     ctx.fillText("❆", this.x, this.y);
@@ -124,8 +134,11 @@
                 initSnow();
             });
 
-            initSnow();
-            animate();
+            // 等待页面所有字体加载完毕，再启动雪花动画，解决首次加载雪花丢失
+            document.fonts.ready.then(()=>{
+                initSnow();
+                animate();
+            });
         })();
     </script>
 </body>
